@@ -10,7 +10,7 @@ function build(fn: LogFn): LogFn {
 }
 
 export const logger = {
-    info: build(console.info.bind(console)),
+    info: build(console.warn.bind(console)),
     warn: build(console.warn.bind(console)),
-    error: build(console.error.bind(console))
+    error: build(console.error.bind(console)),
 };

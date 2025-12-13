@@ -1,12 +1,10 @@
 import bcrypt from 'bcryptjs';
-import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
-import { UserModel, IUser } from '../models/user.model';
+import jwt, { SignOptions } from 'jsonwebtoken';
+
 import { config } from '../config';
 import { RegisterDto, LoginDto } from '../dtos/auth.dto';
-
-interface TokenPayload extends JwtPayload {
-    sub: string;
-}
+import { UserModel } from '../models/user.model';
+import { HttpError } from '../utils/HttpError';
 
 export const authService = {
     async hashPassword(password: string): Promise<string> {
@@ -18,51 +16,57 @@ export const authService = {
         return bcrypt.compare(password, hash);
     },
 
-    createToken(user: IUser): string {
-        const payload: TokenPayload = { sub: user.id };
-
-        const options: SignOptions = {
-            expiresIn: config.jwtExpiresIn as SignOptions['expiresIn']
-        };
-
+    generateAccessToken(userId: string): string {
+        const payload = { sub: userId };
+        const options: SignOptions = { expiresIn: '15m' };
         return jwt.sign(payload, config.jwtSecret, options);
+    },
+
+    generateRefreshToken(userId: string): string {
+        const payload = { sub: userId };
+        const options: SignOptions = { expiresIn: '7d' };
+        return jwt.sign(payload, config.jwtSecret, options);
+    },
+
+    verifyRefreshToken(token: string): { sub: string } {
+        return jwt.verify(token, config.jwtSecret) as { sub: string };
     },
 
     async register(dto: RegisterDto) {
         const existed = await UserModel.findOne({ email: dto.email }).lean();
         if (existed) {
-            const err: any = new Error('Email already in use');
-            err.status = 409;
-            throw err;
+            throw new HttpError(409, 'Email already in use');
         }
 
         const passwordHash = await this.hashPassword(dto.password);
         const newUser = await UserModel.create({ email: dto.email, passwordHash });
 
+        const userId = newUser._id.toString();
+
         return {
-            token: this.createToken(newUser),
-            user: { id: newUser.id, email: newUser.email }
+            user: { id: userId, email: newUser.email },
+            accessToken: this.generateAccessToken(userId),
+            refreshToken: this.generateRefreshToken(userId),
         };
     },
 
     async login(dto: LoginDto) {
         const user = await UserModel.findOne({ email: dto.email });
         if (!user) {
-            const err: any = new Error('Invalid credentials');
-            err.status = 401;
-            throw err;
+            throw new HttpError(401, 'Invalid credentials');
         }
 
         const ok = await this.comparePassword(dto.password, user.passwordHash);
         if (!ok) {
-            const err: any = new Error('Invalid credentials');
-            err.status = 401;
-            throw err;
+            throw new HttpError(401, 'Invalid credentials');
         }
 
+        const userId = user._id.toString();
+
         return {
-            token: this.createToken(user),
-            user: { id: user.id, email: user.email }
+            user: { id: userId, email: user.email },
+            accessToken: this.generateAccessToken(userId),
+            refreshToken: this.generateRefreshToken(userId),
         };
-    }
+    },
 };

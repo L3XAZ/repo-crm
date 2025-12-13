@@ -1,5 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
+
 import { config } from '../config';
+import { HttpError } from '../utils/HttpError';
 
 export interface GithubRepoData {
     owner: string;
@@ -8,21 +10,19 @@ export interface GithubRepoData {
     stars: number;
     forks: number;
     issues: number;
-    createdAt: string;
+    createdAt: Date;
 }
 
 function createClient(): AxiosInstance {
     return axios.create({
         baseURL: 'https://api.github.com',
         timeout: 6000,
-        headers: config.githubToken
-            ? { Authorization: `token ${config.githubToken}` }
-            : undefined
+        headers: config.githubToken ? { Authorization: `token ${config.githubToken}` } : undefined,
     });
 }
 
 async function fetchWithRetry(client: AxiosInstance, url: string, retries = 2): Promise<any> {
-    let lastError: any = null;
+    let lastError: unknown = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
@@ -32,42 +32,32 @@ async function fetchWithRetry(client: AxiosInstance, url: string, retries = 2): 
             const status = error?.response?.status;
 
             if (status === 404) {
-                const err: any = new Error('Repository not found');
-                err.status = 404;
-                throw err;
+                throw new HttpError(404, 'Repository not found');
             }
 
             if (status === 403 && error?.response?.headers?.['x-ratelimit-remaining'] === '0') {
-                const err: any = new Error('GitHub rate limit exceeded');
-                err.status = 429;
-                throw err;
+                throw new HttpError(429, 'GitHub rate limit exceeded');
             }
 
             if (status >= 400 && status < 500) break;
 
             if (attempt < retries) {
                 await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
-                continue;
             }
         }
     }
 
-    const err: any = new Error('Failed to fetch repo from GitHub');
-    err.status = 502;
-    err.details = lastError?.message;
-    throw err;
+    throw new HttpError(502, 'Failed to fetch repo from GitHub', {
+        message: (lastError as any)?.message,
+    });
 }
 
 export const githubService = {
     async fetchRepo(fullName: string): Promise<GithubRepoData> {
-        const parts = fullName.split('/');
-        if (parts.length !== 2) {
-            const err: any = new Error('fullName must be "owner/repo"');
-            err.status = 400;
-            throw err;
+        const [owner, repo] = fullName.split('/');
+        if (!owner || !repo) {
+            throw new HttpError(400, 'fullName must be "owner/repo"');
         }
-
-        const [owner, repo] = parts;
 
         const client = createClient();
         const response = await fetchWithRetry(client, `/repos/${owner}/${repo}`);
@@ -80,7 +70,7 @@ export const githubService = {
             stars: Number(data.stargazers_count),
             forks: Number(data.forks_count),
             issues: Number(data.open_issues_count),
-            createdAt: new Date(data.created_at).toISOString()
+            createdAt: new Date(data.created_at),
         };
-    }
+    },
 };

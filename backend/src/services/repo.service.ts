@@ -1,7 +1,10 @@
-import { RepoModel, IRepo } from '../models/repo.model';
-import { githubService } from './github.service';
 import { Types } from 'mongoose';
+
+import { RepoModel, IRepo } from '../models/repo.model';
+import { HttpError } from '../utils/HttpError';
 import { AddRepoDto } from '../dtos/repo.dto';
+
+import { githubService } from './github.service';
 
 export const repoService = {
     async addRepo(userId: string, dto: AddRepoDto): Promise<IRepo> {
@@ -10,13 +13,11 @@ export const repoService = {
         const exists = await RepoModel.findOne({
             owner: data.owner,
             name: data.name,
-            addedBy: userId
+            addedBy: userId,
         });
 
         if (exists) {
-            const err: any = new Error('Repository already added');
-            err.status = 409;
-            throw err;
+            throw new HttpError(409, 'Repository already added');
         }
 
         return RepoModel.create({
@@ -26,10 +27,10 @@ export const repoService = {
             stars: data.stars,
             forks: data.forks,
             issues: data.issues,
-            createdAt: data.createdAt,
+            createdAt: new Date(data.createdAt),
             addedBy: new Types.ObjectId(userId),
             addedAt: new Date(),
-            lastFetchedAt: new Date()
+            lastFetchedAt: new Date(),
         });
     },
 
@@ -40,15 +41,11 @@ export const repoService = {
     async refreshRepo(userId: string, repoId: string) {
         const repo = await RepoModel.findById(repoId);
         if (!repo) {
-            const err: any = new Error('Repository not found');
-            err.status = 404;
-            throw err;
+            throw new HttpError(404, 'Repository not found');
         }
 
         if (repo.addedBy.toString() !== userId) {
-            const err: any = new Error('Forbidden');
-            err.status = 403;
-            throw err;
+            throw new HttpError(403, 'Forbidden');
         }
 
         const latest = await githubService.fetchRepo(`${repo.owner}/${repo.name}`);
@@ -65,17 +62,13 @@ export const repoService = {
     async deleteRepo(userId: string, repoId: string): Promise<void> {
         const repo = await RepoModel.findById(repoId);
         if (!repo) {
-            const err: any = new Error('Repository not found');
-            err.status = 404;
-            throw err;
+            throw new HttpError(404, 'Repository not found');
         }
 
         if (repo.addedBy.toString() !== userId) {
-            const err: any = new Error('Forbidden');
-            err.status = 403;
-            throw err;
+            throw new HttpError(403, 'Forbidden');
         }
 
         await RepoModel.deleteOne({ _id: repoId });
-    }
+    },
 };

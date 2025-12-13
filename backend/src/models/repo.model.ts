@@ -7,23 +7,23 @@ export interface IRepo extends Document {
     stars: number;
     forks: number;
     issues: number;
-    createdAt: string;
+    createdAt: Date;
     addedBy: Types.ObjectId;
     addedAt: Date;
-    lastFetchedAt?: Date;
+    lastFetchedAt?: Date | null;
 }
 
 const RepoSchema = new Schema<IRepo>({
     owner: { type: String, required: true },
     name: { type: String, required: true },
-    url: { type: String, required: true },
-    stars: { type: Number, required: true },
-    forks: { type: Number, required: true },
-    issues: { type: Number, required: true },
-    createdAt: { type: String, required: true },
+    url: { type: String, required: true, default: '' },
+    stars: { type: Number, required: true, default: 0 },
+    forks: { type: Number, required: true, default: 0 },
+    issues: { type: Number, required: true, default: 0 },
+    createdAt: { type: Date, required: true, default: Date.now },
     addedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    addedAt: { type: Date, default: () => new Date() },
-    lastFetchedAt: { type: Date }
+    addedAt: { type: Date, default: Date.now },
+    lastFetchedAt: { type: Date, default: null },
 });
 
 RepoSchema.index({ owner: 1, name: 1, addedBy: 1 }, { unique: true });

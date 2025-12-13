@@ -44,12 +44,11 @@ Environment Variables
 
 The project supports two environments:
 
-1) Local development (without Docker)
+1. Local development (without Docker)
 
 Backend reads env variables from:
 
 backend/.env
-
 
 Example:
 
@@ -60,17 +59,15 @@ JWT_EXPIRES_IN=1d
 GITHUB_TOKEN=
 NODE_ENV=development
 
-
 This file is ignored by Git and is intended only for your local workflow.
 
-2) Docker / Review environment
+2. Docker / Review environment
 
 Docker Compose loads variables from a root-level .env file.
 
 Create it:
 
 cp .env.example .env
-
 
 If .env is missing, the system still works because Docker Compose and backend provide safe fallback defaults:
 
@@ -87,7 +84,8 @@ GITHUB_TOKEN: empty (GitHub API will work with rate limits)
 VITE_API_URL: http://localhost:4000
 
 Running the Project
-1) Local Development (fastest workflow)
+
+1. Local Development (fastest workflow)
    Start MongoDB
    docker run -d --name local-mongo -p 27017:27017 mongo:6
 
@@ -97,16 +95,14 @@ npm --workspace backend run dev
 Frontend
 npm --workspace frontend run dev
 
-
 Backend runs on http://localhost:4000.
 Frontend runs on http://localhost:5173.
 
-2) Full Application (Docker mode)
+2. Full Application (Docker mode)
 
 Build and start everything with one command:
 
 docker compose up --build
-
 
 Services:
 
@@ -123,7 +119,6 @@ Authentication Notes
 JWT tokens expire based on:
 
 JWT_EXPIRES_IN
-
 
 Default: 1d (1 day).
 When a token expires, API returns 401 Unauthorized.

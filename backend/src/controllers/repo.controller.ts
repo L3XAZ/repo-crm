@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
-import { validationResult } from 'express-validator';
-import { repoService } from '../services/repo.service';
+
+import { addRepoSchema } from '../dtos/repo.dto';
 import { AuthedRequest } from '../middlewares/auth.middleware';
-import { AddRepoDto } from '../dtos/repo.dto';
+import { repoService } from '../services/repo.service';
 
 export const repoController = {
     async list(req: AuthedRequest, res: Response, next: NextFunction) {
@@ -16,14 +16,13 @@ export const repoController = {
 
     async add(req: AuthedRequest, res: Response, next: NextFunction) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                res.status(400).json({ error: 'Validation failed', details: errors.array() });
-                return;
-            }
-
-            const dto = req.body as AddRepoDto;
+            const dto = addRepoSchema.parse(req.body);
             const repo = await repoService.addRepo(req.userId!, dto);
+
+            setImmediate(() => {
+                repoService.refreshRepo(req.userId!, repo._id.toString()).catch(() => {});
+            });
+
             res.status(201).json({ repo });
         } catch (err) {
             next(err);
@@ -46,5 +45,5 @@ export const repoController = {
         } catch (err) {
             next(err);
         }
-    }
+    },
 };

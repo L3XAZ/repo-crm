@@ -1,20 +1,30 @@
-import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+
+import { config } from './config';
+import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
 import repoRoutes from './routes/repo.routes';
-import { errorHandler } from './middlewares/error.middleware';
-import { logger } from './utils/logger';
 
 export function createApp() {
     const app = express();
 
     app.use(helmet());
-    app.use(cors());
+
+    app.use(
+        cors({
+            origin: true,
+            credentials: true,
+        })
+    );
+
+    app.use(cookieParser());
     app.use(express.json());
 
-    if (process.env.NODE_ENV !== 'test') {
+    if (config.nodeEnv !== 'test') {
         app.use(morgan('dev'));
     }
 
@@ -22,8 +32,6 @@ export function createApp() {
     app.use('/api/repos', repoRoutes);
 
     app.use(errorHandler);
-
-    logger.info('Express app configured');
 
     return app;
 }

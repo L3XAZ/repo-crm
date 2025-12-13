@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 import { createApp } from './app';
 import { config } from './config';
 import { logger } from './utils/logger';
@@ -17,28 +18,23 @@ async function start() {
         logger.error('MongoDB connection failed', err);
         process.exit(1);
     }
+
     const server = app.listen(config.port, () => {
         logger.info(`Server listening on port ${config.port}`);
     });
-    const shutdown = async (signal?: string) => {
+
+    const shutdown = async () => {
         try {
-            logger.info('Shutdown initiated', signal ?? '');
             await mongoose.disconnect();
-            server.close(() => {
-                logger.info('Server closed');
-                process.exit(0);
-            });
-            setTimeout(() => {
-                logger.error('Forcing shutdown');
-                process.exit(1);
-            }, 5000).unref();
+            server.close(() => process.exit(0));
         } catch (err) {
-            logger.error('Error during shutdown', err);
+            logger.error('Shutdown error', err);
             process.exit(1);
         }
     };
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
 }
 
 start().catch((err) => {
