@@ -11,14 +11,27 @@ import { useRepos } from '../features/repos/useRepos';
 import { Repo } from '../types/repo.types';
 import { mapError } from '../utils/errorMapper';
 
+const REPO_FULL_NAME_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
 export default function DashboardPage() {
-    const { repos, isLoading, addRepo, refreshRepo, deleteRepo, refreshingRepoId, isDeleting } =
-        useRepos();
+    const {
+        repos,
+        isLoading,
+        addRepo,
+        refreshRepo,
+        deleteRepo,
+        refreshingRepoId,
+        isDeleting,
+    } = useRepos();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [newRepoFullName, setNewRepoFullName] = useState('');
     const [addError, setAddError] = useState<string | null>(null);
     const [repoToDelete, setRepoToDelete] = useState<Repo | null>(null);
+
+    const trimmedRepoName = newRepoFullName.trim();
+    const isRepoFormatValid =
+        trimmedRepoName.length > 0 && REPO_FULL_NAME_REGEX.test(trimmedRepoName);
 
     const filteredRepos = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -29,7 +42,8 @@ export default function DashboardPage() {
 
         return repos.filter(
             (repo) =>
-                repo.owner.toLowerCase().includes(query) || repo.name.toLowerCase().includes(query)
+                repo.owner.toLowerCase().includes(query) ||
+                repo.name.toLowerCase().includes(query)
         );
     }, [repos, searchQuery]);
 
@@ -42,13 +56,23 @@ export default function DashboardPage() {
     }
 
     const handleAddRepo = async () => {
+        if (!isRepoFormatValid) {
+            return;
+        }
+
         setAddError(null);
 
         try {
-            await addRepo({ fullName: newRepoFullName.trim() });
+            await addRepo({ fullName: trimmedRepoName });
             setNewRepoFullName('');
         } catch (error) {
             const mapped = mapError(error);
+
+            if (mapped.status === 409) {
+                setAddError('Repository already added');
+                return;
+            }
+
             setAddError(mapped.message);
         }
     };
@@ -56,18 +80,25 @@ export default function DashboardPage() {
     return (
         <PageContainer>
             <Box display="flex" flexDirection="column" gap={2} marginBottom={4}>
-                <Box display="flex" alignItems="center" gap={2}>
-                    <TextField
-                        placeholder="owner/repository"
-                        value={newRepoFullName}
-                        onChange={(event) => setNewRepoFullName(event.target.value)}
-                        fullWidth
-                    />
+                <Box display="flex" alignItems="flex-start" gap={2}>
+                    <Box flex={1}>
+                        <TextField
+                            placeholder="Enter GitHub repository"
+                            value={newRepoFullName}
+                            onChange={(event) => {
+                                setNewRepoFullName(event.target.value);
+                                setAddError(null);
+                            }}
+                            error={Boolean(trimmedRepoName) && !isRepoFormatValid}
+                            helperText="Use format: owner/repository (example: facebook/react)"
+                            fullWidth
+                        />
+                    </Box>
 
                     <Button
                         onClick={handleAddRepo}
-                        disabled={newRepoFullName.trim().length === 0}
-                        sx={{ height: 56 }}
+                        disabled={!isRepoFormatValid}
+                        sx={{ height: 56, minWidth: 140 }}
                     >
                         Add
                     </Button>
@@ -82,7 +113,7 @@ export default function DashboardPage() {
                 <Divider />
 
                 <TextField
-                    placeholder="Search repositories"
+                    placeholder="Search your repositories"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     size="small"
@@ -99,13 +130,17 @@ export default function DashboardPage() {
                     repos={filteredRepos}
                     refreshingRepoId={refreshingRepoId}
                     onRefresh={refreshRepo}
-                    onRequestDelete={(repo) => setRepoToDelete(repo)}
+                    onRequestDelete={setRepoToDelete}
                 />
             )}
 
             <DeleteRepoDialog
                 open={Boolean(repoToDelete)}
-                repoName={repoToDelete ? `${repoToDelete.owner}/${repoToDelete.name}` : null}
+                repoName={
+                    repoToDelete
+                        ? `${repoToDelete.owner}/${repoToDelete.name}`
+                        : null
+                }
                 isSubmitting={isDeleting}
                 onClose={() => setRepoToDelete(null)}
                 onConfirm={async () => {

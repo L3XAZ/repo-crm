@@ -14,8 +14,9 @@ export function RepoList({ repos, refreshingRepoId, onRefresh, onRequestDelete }
         <Box
             sx={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                 gap: 2,
+                justifyItems: 'start',
             }}
         >
             {repos.map((repo) => (

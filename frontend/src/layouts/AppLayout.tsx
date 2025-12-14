@@ -28,9 +28,23 @@ export default function AppLayout() {
                         justifyContent: 'space-between',
                     }}
                 >
-                    <Typography variant="h6">Repo CRM</Typography>
+                    <Typography
+                        variant="h5"
+                        sx={{
+                            fontWeight: 600,
+                            userSelect: 'none',
+                            cursor: 'default',
+                        }}
+                    >
+                        Repo CRM
+                    </Typography>
 
-                    <Button variant="text" onClick={() => void logout()}>
+                    <Button
+                        variant="text"
+                        size="large"
+                        sx={{ fontWeight: 500 }}
+                        onClick={() => void logout()}
+                    >
                         Logout
                     </Button>
                 </Toolbar>

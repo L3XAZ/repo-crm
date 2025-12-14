@@ -4,10 +4,11 @@ import {
     Card,
     CardActions,
     CardContent,
-    IconButton,
     Link,
     Typography,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { Repo } from '../../types/repo.types';
 
 type Props = {
@@ -19,7 +20,12 @@ type Props = {
 
 export function RepoCard({ repo, isRefreshing, onRefresh, onRequestDelete }: Props) {
     return (
-        <Card>
+        <Card
+            sx={{
+                width: '100%',
+                maxWidth: 420,
+            }}
+        >
             <CardContent
                 sx={{
                     display: 'flex',
@@ -69,15 +75,22 @@ export function RepoCard({ repo, isRefreshing, onRefresh, onRequestDelete }: Pro
                 <Button
                     size="small"
                     variant="text"
+                    startIcon={<RefreshIcon fontSize="small" />}
                     onClick={() => onRefresh(repo._id)}
                     disabled={isRefreshing}
                 >
                     Refresh
                 </Button>
 
-                <IconButton size="small" onClick={() => onRequestDelete(repo)}>
+                <Button
+                    size="small"
+                    variant="text"
+                    color="error"
+                    startIcon={<DeleteOutlineIcon fontSize="small" />}
+                    onClick={() => onRequestDelete(repo)}
+                >
                     Delete
-                </IconButton>
+                </Button>
             </CardActions>
         </Card>
     );

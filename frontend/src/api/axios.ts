@@ -26,12 +26,30 @@ const processQueue = (error?: AxiosError) => {
     refreshQueue = [];
 };
 
+const isAuthEndpoint = (url?: string) => {
+    if (!url) {
+        return false;
+    }
+
+    return (
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/refresh') ||
+        url.includes('/auth/logout')
+    );
+};
+
 api.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error: AxiosError) => {
         const originalConfig = error.config as RetryConfig | undefined;
 
-        if (error.response?.status !== 401 || !originalConfig || originalConfig._retry) {
+        if (
+            error.response?.status !== 401 ||
+            !originalConfig ||
+            originalConfig._retry ||
+            isAuthEndpoint(originalConfig.url)
+        ) {
             return Promise.reject(error);
         }
 

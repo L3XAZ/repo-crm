@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, TextField, Typography } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
+import { AppError } from '../../utils/errorMapper';
 
 type AuthMode = 'login' | 'register';
+
+const MIN_REGISTER_PASSWORD_LENGTH = 6;
 
 export default function AuthForm() {
     const location = useLocation();
@@ -17,7 +20,13 @@ export default function AuthForm() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isDisabled = isSubmitting;
+    const isRegisterPasswordValid = password.length >= MIN_REGISTER_PASSWORD_LENGTH;
+    const isLoginPasswordValid = password.length > 0;
+
+    const isSubmitDisabled =
+        isSubmitting ||
+        (mode === 'register' && !isRegisterPasswordValid) ||
+        (mode === 'login' && !isLoginPasswordValid);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -30,13 +39,21 @@ export default function AuthForm() {
             } else {
                 await register({ email, password });
             }
-
-            navigate('/', { replace: true });
         } catch (error) {
-            if (typeof error === 'object' && error !== null && 'message' in error) {
-                setErrorMessage(String(error.message));
+            const appError = error as AppError;
+
+            if (mode === 'login') {
+                if (appError.status === 401) {
+                    setErrorMessage('Invalid email or password');
+                } else {
+                    setErrorMessage('Unable to sign in. Please try again');
+                }
             } else {
-                setErrorMessage('Authentication failed');
+                if (appError.status === 409) {
+                    setErrorMessage('This email is already registered');
+                } else {
+                    setErrorMessage('Unable to create account. Please try again');
+                }
             }
         } finally {
             setIsSubmitting(false);
@@ -46,7 +63,9 @@ export default function AuthForm() {
     const title = mode === 'login' ? 'Sign in' : 'Create account';
     const submitLabel = mode === 'login' ? 'Login' : 'Register';
     const switchLabel =
-        mode === 'login' ? 'Don’t have an account? Register' : 'Already have an account? Login';
+        mode === 'login'
+            ? 'Don’t have an account? Register'
+            : 'Already have an account? Login';
     const switchPath = mode === 'login' ? '/register' : '/login';
 
     return (
@@ -81,6 +100,12 @@ export default function AuthForm() {
                 required
                 fullWidth
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                error={mode === 'register' && password.length > 0 && !isRegisterPasswordValid}
+                helperText={
+                    mode === 'register'
+                        ? `Password must be at least ${MIN_REGISTER_PASSWORD_LENGTH} characters`
+                        : undefined
+                }
             />
 
             {errorMessage && (
@@ -89,11 +114,20 @@ export default function AuthForm() {
                 </Typography>
             )}
 
-            <Button type="submit" variant="contained" disabled={isDisabled} fullWidth>
-                {isSubmitting ? <CircularProgress size={20} /> : submitLabel}
+            <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitDisabled}
+                fullWidth
+            >
+                {submitLabel}
             </Button>
 
-            <Button variant="text" onClick={() => navigate(switchPath)} disabled={isDisabled}>
+            <Button
+                variant="text"
+                onClick={() => navigate(switchPath)}
+                disabled={isSubmitting}
+            >
                 {switchLabel}
             </Button>
         </Box>
