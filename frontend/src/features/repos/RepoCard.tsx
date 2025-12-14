@@ -1,14 +1,7 @@
-import {
-    Box,
-    Button,
-    Card,
-    CardActions,
-    CardContent,
-    Link,
-    Typography,
-} from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import { Box, Button, Card, CardActions, CardContent, Link, Typography } from '@mui/material';
+
 import { Repo } from '../../types/repo.types';
 
 type Props = {
@@ -19,13 +12,16 @@ type Props = {
 };
 
 export function RepoCard({ repo, isRefreshing, onRefresh, onRequestDelete }: Props) {
+    const fullName = `${repo.owner}/${repo.name}`;
+    const githubUrl = repo.url;
+
+    const createdDate = new Date(repo.createdAt).toLocaleDateString();
+    const lastFetchedDate = repo.lastFetchedAt
+        ? new Date(repo.lastFetchedAt).toLocaleString()
+        : null;
+
     return (
-        <Card
-            sx={{
-                width: '100%',
-                maxWidth: 420,
-            }}
-        >
+        <Card sx={{ width: '100%', maxWidth: 420 }}>
             <CardContent
                 sx={{
                     display: 'flex',
@@ -34,11 +30,11 @@ export function RepoCard({ repo, isRefreshing, onRefresh, onRequestDelete }: Pro
                 }}
             >
                 <Typography variant="subtitle1" fontWeight={600}>
-                    {repo.owner}/{repo.name}
+                    {fullName}
                 </Typography>
 
                 <Link
-                    href={repo.url}
+                    href={githubUrl}
                     target="_blank"
                     rel="noreferrer"
                     underline="hover"
@@ -53,12 +49,12 @@ export function RepoCard({ repo, isRefreshing, onRefresh, onRequestDelete }: Pro
 
                 <Box>
                     <Typography variant="caption" color="text.secondary" display="block">
-                        Created {new Date(repo.createdAt).toLocaleDateString()}
+                        Created {createdDate}
                     </Typography>
 
-                    {repo.lastFetchedAt && (
+                    {lastFetchedDate && (
                         <Typography variant="caption" color="text.secondary" display="block">
-                            Last fetched {new Date(repo.lastFetchedAt).toLocaleString()}
+                            Last fetched {lastFetchedDate}
                         </Typography>
                     )}
                 </Box>

@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
 
+import { AddRepoDto } from '../dtos/repo.dto';
 import { RepoModel, IRepo } from '../models/repo.model';
 import { HttpError } from '../utils/HttpError';
-import { AddRepoDto } from '../dtos/repo.dto';
 
 import { githubService } from './github.service';
 

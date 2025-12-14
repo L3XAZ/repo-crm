@@ -10,8 +10,8 @@ export function Loader({ fullHeight = false }: Props) {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            minHeight={fullHeight ? '100vh' : '100%'}
             width="100%"
+            minHeight={fullHeight ? '100vh' : '100%'}
         >
             <CircularProgress />
         </Box>

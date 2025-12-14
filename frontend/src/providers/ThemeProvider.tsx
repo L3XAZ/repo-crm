@@ -1,5 +1,5 @@
-import { PropsWithChildren } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { PropsWithChildren } from 'react';
 
 const theme = createTheme({
     typography: {

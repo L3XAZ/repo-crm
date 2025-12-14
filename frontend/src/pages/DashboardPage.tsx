@@ -1,28 +1,22 @@
-import { useMemo, useState } from 'react';
 import { Box, Divider, Typography } from '@mui/material';
-import { PageContainer } from '../ui/PageContainer';
-import { Loader } from '../ui/Loader';
-import { EmptyState } from '../ui/EmptyState';
-import { Button } from '../ui/Button';
-import { TextField } from '../ui/TextField';
-import { RepoList } from '../features/repos/RepoList';
+import { AxiosError } from 'axios';
+import { useMemo, useState } from 'react';
+
 import { DeleteRepoDialog } from '../features/repos/DeleteRepoDialog';
+import { RepoList } from '../features/repos/RepoList';
 import { useRepos } from '../features/repos/useRepos';
 import { Repo } from '../types/repo.types';
-import { mapError } from '../utils/errorMapper';
+import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
+import { Loader } from '../ui/Loader';
+import { PageContainer } from '../ui/PageContainer';
+import { TextField } from '../ui/TextField';
 
 const REPO_FULL_NAME_REGEX = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
 export default function DashboardPage() {
-    const {
-        repos,
-        isLoading,
-        addRepo,
-        refreshRepo,
-        deleteRepo,
-        refreshingRepoId,
-        isDeleting,
-    } = useRepos();
+    const { repos, isLoading, addRepo, refreshRepo, deleteRepo, refreshingRepoId, isDeleting } =
+        useRepos();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [newRepoFullName, setNewRepoFullName] = useState('');
@@ -33,19 +27,22 @@ export default function DashboardPage() {
     const isRepoFormatValid =
         trimmedRepoName.length > 0 && REPO_FULL_NAME_REGEX.test(trimmedRepoName);
 
+    const isAddDisabled = !isRepoFormatValid;
+    const showAddError = Boolean(addError);
+
     const filteredRepos = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
-
         if (!query) {
             return repos;
         }
 
         return repos.filter(
             (repo) =>
-                repo.owner.toLowerCase().includes(query) ||
-                repo.name.toLowerCase().includes(query)
+                repo.owner.toLowerCase().includes(query) || repo.name.toLowerCase().includes(query)
         );
     }, [repos, searchQuery]);
+
+    const hasRepos = filteredRepos.length > 0;
 
     if (isLoading) {
         return (
@@ -66,14 +63,20 @@ export default function DashboardPage() {
             await addRepo({ fullName: trimmedRepoName });
             setNewRepoFullName('');
         } catch (error) {
-            const mapped = mapError(error);
+            const axiosError = error as AxiosError;
+            const status = axiosError.response?.status;
 
-            if (mapped.status === 409) {
+            if (status === 409) {
                 setAddError('Repository already added');
                 return;
             }
 
-            setAddError(mapped.message);
+            if (status === 404) {
+                setAddError('Repository not found on GitHub');
+                return;
+            }
+
+            setAddError('Something went wrong. Please try again.');
         }
     };
 
@@ -97,14 +100,14 @@ export default function DashboardPage() {
 
                     <Button
                         onClick={handleAddRepo}
-                        disabled={!isRepoFormatValid}
+                        disabled={isAddDisabled}
                         sx={{ height: 56, minWidth: 140 }}
                     >
                         Add
                     </Button>
                 </Box>
 
-                {addError && (
+                {showAddError && (
                     <Typography variant="body2" color="error">
                         {addError}
                     </Typography>
@@ -120,27 +123,23 @@ export default function DashboardPage() {
                 />
             </Box>
 
-            {filteredRepos.length === 0 ? (
-                <EmptyState
-                    title="No repositories"
-                    description="Add your first repository to get started"
-                />
-            ) : (
+            {hasRepos ? (
                 <RepoList
                     repos={filteredRepos}
                     refreshingRepoId={refreshingRepoId}
                     onRefresh={refreshRepo}
                     onRequestDelete={setRepoToDelete}
                 />
+            ) : (
+                <EmptyState
+                    title="No repositories"
+                    description="Add your first repository to get started"
+                />
             )}
 
             <DeleteRepoDialog
                 open={Boolean(repoToDelete)}
-                repoName={
-                    repoToDelete
-                        ? `${repoToDelete.owner}/${repoToDelete.name}`
-                        : null
-                }
+                repoName={repoToDelete ? `${repoToDelete.owner}/${repoToDelete.name}` : null}
                 isSubmitting={isDeleting}
                 onClose={() => setRepoToDelete(null)}
                 onConfirm={async () => {

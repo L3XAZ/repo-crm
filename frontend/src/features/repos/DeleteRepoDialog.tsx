@@ -16,13 +16,15 @@ type Props = {
 };
 
 export function DeleteRepoDialog({ open, repoName, isSubmitting, onConfirm, onClose }: Props) {
+    const displayName = repoName ?? 'this repository';
+
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
             <DialogTitle>Delete repository</DialogTitle>
 
             <DialogContent>
                 <Typography>
-                    Are you sure you want to delete <strong>{repoName}</strong>?
+                    Are you sure you want to delete <strong>{displayName}</strong>?
                 </Typography>
             </DialogContent>
 

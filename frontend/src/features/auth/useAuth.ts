@@ -1,7 +1,8 @@
-import { useContext } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { AuthContext } from '../../providers/AuthProvider';
+import { useContext } from 'react';
+
 import * as authApi from '../../api/auth.api';
+import { AuthContext } from '../../providers/AuthProvider';
 import { LoginRequest, RegisterRequest } from '../../types/auth.types';
 import { mapError } from '../../utils/errorMapper';
 
@@ -16,29 +17,35 @@ export function useAuth() {
 
     const loginMutation = useMutation({
         mutationFn: authApi.login,
-        onSuccess: () => {
-            window.location.replace('/');
-        },
-        onError: (error) => {
-            throw mapError(error);
-        },
     });
 
     const registerMutation = useMutation({
         mutationFn: authApi.register,
-        onSuccess: () => {
-            window.location.replace('/');
-        },
-        onError: (error) => {
-            throw mapError(error);
-        },
     });
+
+    const login = async (payload: LoginRequest) => {
+        try {
+            await loginMutation.mutateAsync(payload);
+            window.location.replace('/');
+        } catch (error) {
+            throw mapError(error);
+        }
+    };
+
+    const register = async (payload: RegisterRequest) => {
+        try {
+            await registerMutation.mutateAsync(payload);
+            window.location.replace('/');
+        } catch (error) {
+            throw mapError(error);
+        }
+    };
 
     return {
         isAuthenticated,
         isAuthChecked,
-        login: (payload: LoginRequest) => loginMutation.mutateAsync(payload),
-        register: (payload: RegisterRequest) => registerMutation.mutateAsync(payload),
+        login,
+        register,
         logout,
     };
 }

@@ -1,5 +1,5 @@
-import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 import axios from 'axios';
+import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
 type AuthContextValue = {
     isAuthenticated: boolean;

@@ -1,5 +1,7 @@
 import { Box } from '@mui/material';
+
 import { Repo } from '../../types/repo.types';
+
 import { RepoCard } from './RepoCard';
 
 type Props = {

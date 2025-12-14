@@ -1,8 +1,10 @@
-import { useState } from 'react';
 import { Box, Button, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from './useAuth';
+
 import { AppError } from '../../utils/errorMapper';
+
+import { useAuth } from './useAuth';
 
 type AuthMode = 'login' | 'register';
 
@@ -20,13 +22,23 @@ export default function AuthForm() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isRegisterPasswordValid = password.length >= MIN_REGISTER_PASSWORD_LENGTH;
-    const isLoginPasswordValid = password.length > 0;
+    const isPasswordValid =
+        mode === 'register' ? password.length >= MIN_REGISTER_PASSWORD_LENGTH : password.length > 0;
 
-    const isSubmitDisabled =
-        isSubmitting ||
-        (mode === 'register' && !isRegisterPasswordValid) ||
-        (mode === 'login' && !isLoginPasswordValid);
+    const showPasswordError = mode === 'register' && password.length > 0 && !isPasswordValid;
+
+    const passwordHelperText =
+        mode === 'register'
+            ? `Password must be at least ${MIN_REGISTER_PASSWORD_LENGTH} characters`
+            : undefined;
+
+    const isSubmitDisabled = isSubmitting || !isPasswordValid;
+
+    const title = mode === 'login' ? 'Sign in' : 'Create account';
+    const submitLabel = mode === 'login' ? 'Login' : 'Register';
+    const switchLabel =
+        mode === 'login' ? 'Don’t have an account? Register' : 'Already have an account? Login';
+    const switchPath = mode === 'login' ? '/register' : '/login';
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -43,30 +55,22 @@ export default function AuthForm() {
             const appError = error as AppError;
 
             if (mode === 'login') {
-                if (appError.status === 401) {
-                    setErrorMessage('Invalid email or password');
-                } else {
-                    setErrorMessage('Unable to sign in. Please try again');
-                }
+                setErrorMessage(
+                    appError.status === 401
+                        ? 'Invalid email or password'
+                        : 'Unable to sign in. Please try again'
+                );
             } else {
-                if (appError.status === 409) {
-                    setErrorMessage('This email is already registered');
-                } else {
-                    setErrorMessage('Unable to create account. Please try again');
-                }
+                setErrorMessage(
+                    appError.status === 409
+                        ? 'This email is already registered'
+                        : 'Unable to create account. Please try again'
+                );
             }
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const title = mode === 'login' ? 'Sign in' : 'Create account';
-    const submitLabel = mode === 'login' ? 'Login' : 'Register';
-    const switchLabel =
-        mode === 'login'
-            ? 'Don’t have an account? Register'
-            : 'Already have an account? Login';
-    const switchPath = mode === 'login' ? '/register' : '/login';
 
     return (
         <Box
@@ -88,7 +92,6 @@ export default function AuthForm() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
-                fullWidth
                 autoComplete="email"
             />
 
@@ -98,14 +101,9 @@ export default function AuthForm() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
-                fullWidth
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                error={mode === 'register' && password.length > 0 && !isRegisterPasswordValid}
-                helperText={
-                    mode === 'register'
-                        ? `Password must be at least ${MIN_REGISTER_PASSWORD_LENGTH} characters`
-                        : undefined
-                }
+                error={showPasswordError}
+                helperText={passwordHelperText}
             />
 
             {errorMessage && (
@@ -114,20 +112,11 @@ export default function AuthForm() {
                 </Typography>
             )}
 
-            <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitDisabled}
-                fullWidth
-            >
+            <Button type="submit" variant="contained" disabled={isSubmitDisabled} fullWidth>
                 {submitLabel}
             </Button>
 
-            <Button
-                variant="text"
-                onClick={() => navigate(switchPath)}
-                disabled={isSubmitting}
-            >
+            <Button variant="text" onClick={() => navigate(switchPath)} disabled={isSubmitting}>
                 {switchLabel}
             </Button>
         </Box>

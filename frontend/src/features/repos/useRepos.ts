@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+
 import * as reposApi from '../../api/repos.api';
 import { Repo } from '../../types/repo.types';
-import { mapError } from '../../utils/errorMapper';
 
 const REPOS_QUERY_KEY = ['repos'];
 
@@ -10,7 +10,7 @@ export function useRepos() {
     const queryClient = useQueryClient();
     const [refreshingRepoId, setRefreshingRepoId] = useState<string | null>(null);
 
-    const reposQuery = useQuery({
+    const { data: repos = [], isLoading } = useQuery({
         queryKey: REPOS_QUERY_KEY,
         queryFn: async () => {
             const { repos } = await reposApi.getRepos();
@@ -23,14 +23,11 @@ export function useRepos() {
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: REPOS_QUERY_KEY });
         },
-        onError: (error) => {
-            throw mapError(error);
-        },
     });
 
     const refreshRepoMutation = useMutation({
-        mutationFn: ({ id }: { id: string }) => reposApi.refreshRepo(id),
-        onMutate: ({ id }) => {
+        mutationFn: reposApi.refreshRepo,
+        onMutate: (id: string) => {
             setRefreshingRepoId(id);
         },
         onSuccess: ({ repo }) => {
@@ -38,17 +35,14 @@ export function useRepos() {
                 current ? current.map((r) => (r._id === repo._id ? repo : r)) : current
             );
         },
-        onError: (error) => {
-            throw mapError(error);
-        },
         onSettled: () => {
             setRefreshingRepoId(null);
         },
     });
 
     const deleteRepoMutation = useMutation({
-        mutationFn: ({ id }: { id: string }) => reposApi.deleteRepo(id),
-        onMutate: async ({ id }) => {
+        mutationFn: reposApi.deleteRepo,
+        onMutate: async (id: string) => {
             await queryClient.cancelQueries({ queryKey: REPOS_QUERY_KEY });
 
             const previous = queryClient.getQueryData<Repo[]>(REPOS_QUERY_KEY);
@@ -59,24 +53,35 @@ export function useRepos() {
 
             return { previous };
         },
-        onError: (error, _vars, context) => {
+        onError: (_error, _id, context) => {
             if (context?.previous) {
                 queryClient.setQueryData(REPOS_QUERY_KEY, context.previous);
             }
-            throw mapError(error);
         },
         onSettled: () => {
             void queryClient.invalidateQueries({ queryKey: REPOS_QUERY_KEY });
         },
     });
 
-    return {
-        repos: reposQuery.data ?? [],
-        isLoading: reposQuery.isLoading,
+    const addRepo = (payload: { fullName: string }) => {
+        return addRepoMutation.mutateAsync(payload);
+    };
 
-        addRepo: (payload: { fullName: string }) => addRepoMutation.mutateAsync(payload),
-        refreshRepo: (id: string) => refreshRepoMutation.mutateAsync({ id }),
-        deleteRepo: (id: string) => deleteRepoMutation.mutateAsync({ id }),
+    const refreshRepo = (id: string) => {
+        return refreshRepoMutation.mutateAsync(id);
+    };
+
+    const deleteRepo = (id: string) => {
+        return deleteRepoMutation.mutateAsync(id);
+    };
+
+    return {
+        repos,
+        isLoading,
+
+        addRepo,
+        refreshRepo,
+        deleteRepo,
 
         refreshingRepoId,
         isDeleting: deleteRepoMutation.isPending,

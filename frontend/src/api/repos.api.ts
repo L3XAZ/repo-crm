@@ -1,5 +1,6 @@
-import api from './axios';
 import { AddRepoRequest, RepoResponse, ReposResponse } from '../types/repo.types';
+
+import api from './axios';
 
 export const getRepos = async (): Promise<ReposResponse> => {
     const { data } = await api.get<ReposResponse>('/repos');
