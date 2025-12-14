@@ -1,9 +1,4 @@
-import axios, {
-    AxiosError,
-    AxiosInstance,
-    AxiosRequestConfig,
-    AxiosResponse,
-} from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 type RetryConfig = AxiosRequestConfig & {
     _retry?: boolean;
@@ -21,7 +16,7 @@ let refreshQueue: Array<{
 }> = [];
 
 const processQueue = (error?: AxiosError) => {
-    refreshQueue.forEach(promise => {
+    refreshQueue.forEach((promise) => {
         if (error) {
             promise.reject(error);
         } else {
@@ -36,11 +31,7 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalConfig = error.config as RetryConfig | undefined;
 
-        if (
-            error.response?.status !== 401 ||
-            !originalConfig ||
-            originalConfig._retry
-        ) {
+        if (error.response?.status !== 401 || !originalConfig || originalConfig._retry) {
             return Promise.reject(error);
         }
 
@@ -63,7 +54,6 @@ api.interceptors.response.use(
             return api(originalConfig);
         } catch (refreshError) {
             processQueue(refreshError as AxiosError);
-            window.location.assign('/login');
             return Promise.reject(refreshError);
         } finally {
             isRefreshing = false;

@@ -1,27 +1,13 @@
 import api from './axios';
-import {
-    AuthResponse,
-    LoginRequest,
-    RegisterRequest,
-} from '../types/auth.types';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../types/auth.types';
 
-export const register = async (
-    payload: RegisterRequest
-): Promise<AuthResponse> => {
-    const { data } = await api.post<AuthResponse>(
-        '/auth/register',
-        payload
-    );
+export const register = async (payload: RegisterRequest): Promise<AuthResponse> => {
+    const { data } = await api.post<AuthResponse>('/auth/register', payload);
     return data;
 };
 
-export const login = async (
-    payload: LoginRequest
-): Promise<AuthResponse> => {
-    const { data } = await api.post<AuthResponse>(
-        '/auth/login',
-        payload
-    );
+export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
+    const { data } = await api.post<AuthResponse>('/auth/login', payload);
     return data;
 };
 

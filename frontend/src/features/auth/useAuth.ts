@@ -2,10 +2,7 @@ import { useContext } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { AuthContext } from '../../providers/AuthProvider';
 import * as authApi from '../../api/auth.api';
-import {
-    LoginRequest,
-    RegisterRequest,
-} from '../../types/auth.types';
+import { LoginRequest, RegisterRequest } from '../../types/auth.types';
 import { mapError } from '../../utils/errorMapper';
 
 export const useAuth = () => {
@@ -19,20 +16,20 @@ export const useAuth = () => {
 
     const loginMutation = useMutation({
         mutationFn: authApi.login,
-        onSuccess: data => {
+        onSuccess: (data) => {
             setUser(data.user);
         },
-        onError: error => {
+        onError: (error) => {
             throw mapError(error);
         },
     });
 
     const registerMutation = useMutation({
         mutationFn: authApi.register,
-        onSuccess: data => {
+        onSuccess: (data) => {
             setUser(data.user);
         },
-        onError: error => {
+        onError: (error) => {
             throw mapError(error);
         },
     });
@@ -44,11 +41,9 @@ export const useAuth = () => {
         },
     });
 
-    const login = (payload: LoginRequest) =>
-        loginMutation.mutateAsync(payload);
+    const login = (payload: LoginRequest) => loginMutation.mutateAsync(payload);
 
-    const register = (payload: RegisterRequest) =>
-        registerMutation.mutateAsync(payload);
+    const register = (payload: RegisterRequest) => registerMutation.mutateAsync(payload);
 
     const logout = () => logoutMutation.mutateAsync();
 
