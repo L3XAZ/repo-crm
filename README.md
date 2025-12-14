@@ -1,152 +1,135 @@
-Repo CRM — Full-stack Test Project
+<h1 style="text-align: center;">Repo CRM</h1>
 
-Simple CRM system for managing public GitHub repositories.
-Includes authentication, project list, GitHub API integration, update/remove actions, and Docker-first setup.
+<p style="text-align: center;">
+  Full-stack application for managing public GitHub repositories.
+</p>
 
-Tech Stack
-Backend
+---
 
-Node.js, TypeScript
+## Overview
 
-Express
+Repo CRM allows authenticated users to manage a personal list of public GitHub repositories.  
+Users can add repositories using the `owner/name` format, view stored metadata, refresh data from GitHub, and remove entries.
 
-MongoDB (Mongoose)
+---
 
-JWT authentication
+## 🧱 Technology Stack
 
-Frontend
+### Backend
+- **Node.js**
+- **TypeScript**
+- **Express**
+- **MongoDB (Mongoose)**
+- **JWT-based authentication** (httpOnly cookies)
+- **GitHub REST API**
 
-React + Vite
+### Frontend
+- **React**
+- **TypeScript**
+- **Vite**
+- **React Router**
+- **@tanstack/react-query** (server state management)
+- **Material UI**
 
-Nginx (Docker production)
+### Infrastructure & Tooling
+- **Docker**
+- **Docker Compose**
+- **Nginx** (production frontend)
+- **Multi-stage Docker builds**
+- **ESLint & Prettier**
+- **Husky & lint-staged**
 
-Infrastructure
+The project uses a **monorepo structure** with separate frontend and backend workspaces.
 
-Docker & Docker Compose
+---
 
-Multi-stage builds
+## 🚀 Running the Application
 
-Environment-aware configuration
+### Option 1. Full Application (Docker, recommended)
 
-Project Structure
-repo-crm/
-backend/
-src/
-Dockerfile
-.env (local dev only)
-frontend/
-src/
-Dockerfile
-docker-compose.yml
-.env.example
+This is the recommended way to run the project for review.
 
-Environment Variables
+Build and start all services:
 
-The project supports two environments:
-
-1. Local development (without Docker)
-
-Backend reads env variables from:
-
-backend/.env
-
-Example:
-
-PORT=4000
-MONGO_URI=mongodb://localhost:27017/repo-crm
-JWT_SECRET=dev_jwt_secret
-JWT_EXPIRES_IN=1d
-GITHUB_TOKEN=
-NODE_ENV=development
-
-This file is ignored by Git and is intended only for your local workflow.
-
-2. Docker / Review environment
-
-Docker Compose loads variables from a root-level .env file.
-
-Create it:
-
-cp .env.example .env
-
-If .env is missing, the system still works because Docker Compose and backend provide safe fallback defaults:
-
-PORT: 4000
-
-MONGO_URI: mongodb://mongo:27017/repo-crm
-
-JWT_SECRET: default_jwt_secret
-
-JWT_EXPIRES_IN: 1d
-
-GITHUB_TOKEN: empty (GitHub API will work with rate limits)
-
-VITE_API_URL: http://localhost:4000
-
-Running the Project
-
-1. Local Development (fastest workflow)
-   Start MongoDB
-   docker run -d --name local-mongo -p 27017:27017 mongo:6
-
-Backend
-npm --workspace backend run dev
-
-Frontend
-npm --workspace frontend run dev
-
-Backend runs on http://localhost:4000.
-Frontend runs on http://localhost:5173.
-
-2. Full Application (Docker mode)
-
-Build and start everything with one command:
-
+```bash
 docker compose up --build
+```
+
+After startup:
+
+- **Frontend (served by Nginx):** http://localhost
+- **Backend API:** http://localhost:4000
+- **MongoDB:** runs inside the Docker network
+
+No additional configuration is required.  
+If no environment variables are provided, the application runs using **safe fallback defaults**.
+
+---
+
+### Option 2. Local Development (Frontend locally)
+
+This mode is intended for active development with fast feedback.
+
+Start MongoDB:
+
+```bash
+docker run -d --name local-mongo -p 27017:27017 mongo:6
+```
+
+Start backend:
+
+```bash
+npm --workspace backend run dev
+```
+
+Start frontend:
+
+```bash
+npm --workspace frontend run dev
+```
 
 Services:
 
-Frontend → http://localhost
+- **Frontend (Vite):** http://localhost:5173
+- **Backend API:** http://localhost:4000
 
-Backend → http://localhost:4000
+In this mode:
 
-MongoDB → container-internal (mapped to localhost:27017)
+- **Frontend runs with hot reload**
+- **API requests are proxied to the backend**
+- **Development workflow is optimized for fast iteration**
 
-No additional setup required.
+## 🌱 Environment Variables
 
-Authentication Notes
+**Environment variables are optional.**
 
-JWT tokens expire based on:
+The application is designed to run without any `.env` files, using fallback defaults.
 
-JWT_EXPIRES_IN
+`.env.example` file is provided only as a reference for customization.
 
-Default: 1d (1 day).
-When a token expires, API returns 401 Unauthorized.
-Frontend should redirect the user to the login page.
+If a `.env` file exists, its values override defaults
 
-Scripts
-Install dependencies:
-npm install
+If it does not exist, the system still works correctly
 
-Format / Lint:
+## 🛠 Scripts
+
+**Lint** and auto-fix code:
+
+```bash
 npm run lint
+```
+
+Format code with **Prettier**:
+
+```bash
 npm run format
+```
 
-Summary
+## 🔐 Authentication
 
-This project is designed to:
+Authentication is cookie-based.
 
-run locally with zero friction,
+**JWT tokens are stored in httpOnly cookies** and are never accessed directly on the frontend.
 
-run in Docker with one command,
-
-be fully reproducible for reviewers,
-
-avoid hard dependencies on environment variables,
-
-follow clean architecture and separation between dev and prod.
-
-If .env is missing — the system still runs.
-If .env is present — it overrides defaults.
-
-Everything is deterministic and predictable.
+When authentication fails or expires, the backend responds with
+401 Unauthorized, and the frontend redirects the user to the login page.
