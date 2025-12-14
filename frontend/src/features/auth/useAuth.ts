@@ -5,19 +5,19 @@ import * as authApi from '../../api/auth.api';
 import { LoginRequest, RegisterRequest } from '../../types/auth.types';
 import { mapError } from '../../utils/errorMapper';
 
-export const useAuth = () => {
+export function useAuth() {
     const context = useContext(AuthContext);
 
     if (!context) {
         throw new Error('useAuth must be used within AuthProvider');
     }
 
-    const { user, setUser, isAuthenticated, isAuthLoading } = context;
+    const { isAuthenticated, isAuthChecked, logout } = context;
 
     const loginMutation = useMutation({
         mutationFn: authApi.login,
-        onSuccess: (data) => {
-            setUser(data.user);
+        onSuccess: () => {
+            window.location.replace('/');
         },
         onError: (error) => {
             throw mapError(error);
@@ -26,33 +26,19 @@ export const useAuth = () => {
 
     const registerMutation = useMutation({
         mutationFn: authApi.register,
-        onSuccess: (data) => {
-            setUser(data.user);
+        onSuccess: () => {
+            window.location.replace('/');
         },
         onError: (error) => {
             throw mapError(error);
         },
     });
 
-    const logoutMutation = useMutation({
-        mutationFn: authApi.logout,
-        onSuccess: () => {
-            setUser(null);
-        },
-    });
-
-    const login = (payload: LoginRequest) => loginMutation.mutateAsync(payload);
-
-    const register = (payload: RegisterRequest) => registerMutation.mutateAsync(payload);
-
-    const logout = () => logoutMutation.mutateAsync();
-
     return {
-        user,
         isAuthenticated,
-        isAuthLoading,
-        login,
-        register,
+        isAuthChecked,
+        login: (payload: LoginRequest) => loginMutation.mutateAsync(payload),
+        register: (payload: RegisterRequest) => registerMutation.mutateAsync(payload),
         logout,
     };
-};
+}

@@ -1,12 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { AppBar, Box, Toolbar, Typography, Button } from '@mui/material';
+import { AppBar, Box, Toolbar, Typography } from '@mui/material';
+import { Button } from '../ui/Button';
 import { useAuth } from '../features/auth/useAuth';
 import { Loader } from '../ui/Loader';
 
 export default function AppLayout() {
-    const { isAuthenticated, isAuthLoading, logout } = useAuth();
+    const { isAuthenticated, isAuthChecked, logout } = useAuth();
 
-    if (isAuthLoading) {
+    if (!isAuthChecked) {
         return <Loader fullHeight />;
     }
 

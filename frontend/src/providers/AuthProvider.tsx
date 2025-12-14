@@ -1,44 +1,56 @@
 import { createContext, PropsWithChildren, useEffect, useState } from 'react';
-import { User } from '../types/auth.types';
-import * as authApi from '../api/auth.api';
+import axios from 'axios';
 
 type AuthContextValue = {
-    user: User | null;
     isAuthenticated: boolean;
-    isAuthLoading: boolean;
-    setUser: (user: User | null) => void;
+    isAuthChecked: boolean;
+    logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-export const AuthProvider = ({ children }: PropsWithChildren) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [isAuthLoading, setIsAuthLoading] = useState(true);
+const authCheckApi = axios.create({
+    baseURL: '/api',
+    withCredentials: true,
+});
+
+export function AuthProvider({ children }: PropsWithChildren) {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthChecked, setIsAuthChecked] = useState(false);
 
     useEffect(() => {
-        const initAuth = async () => {
+        const checkSession = async () => {
             try {
-                await authApi.refresh();
+                await authCheckApi.get('/repos');
+                setIsAuthenticated(true);
             } catch {
-                setUser(null);
+                setIsAuthenticated(false);
             } finally {
-                setIsAuthLoading(false);
+                setIsAuthChecked(true);
             }
         };
 
-        initAuth();
+        checkSession();
     }, []);
+
+    const logout = async () => {
+        try {
+            await authCheckApi.post('/auth/logout');
+        } finally {
+            setIsAuthenticated(false);
+            setIsAuthChecked(true);
+        }
+    };
 
     return (
         <AuthContext.Provider
             value={{
-                user,
-                isAuthenticated: Boolean(user),
-                isAuthLoading,
-                setUser,
+                isAuthenticated,
+                isAuthChecked,
+                logout,
             }}
         >
             {children}
         </AuthContext.Provider>
     );
-};
+}

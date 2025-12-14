@@ -4,9 +4,9 @@ import { useAuth } from '../features/auth/useAuth';
 import { Loader } from '../ui/Loader';
 
 export default function AuthLayout() {
-    const { isAuthenticated, isAuthLoading } = useAuth();
+    const { isAuthenticated, isAuthChecked } = useAuth();
 
-    if (isAuthLoading) {
+    if (!isAuthChecked) {
         return <Loader fullHeight />;
     }
 

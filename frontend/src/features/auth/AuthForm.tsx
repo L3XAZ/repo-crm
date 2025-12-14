@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
@@ -8,7 +8,7 @@ type AuthMode = 'login' | 'register';
 export default function AuthForm() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { login, register, isAuthLoading } = useAuth();
+    const { login, register } = useAuth();
 
     const mode: AuthMode = location.pathname === '/register' ? 'register' : 'login';
 
@@ -17,7 +17,7 @@ export default function AuthForm() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isDisabled = isSubmitting || isAuthLoading;
+    const isDisabled = isSubmitting;
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
